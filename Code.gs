@@ -2,7 +2,7 @@
  * Script to export social media posts to Orlo format
  * Author:  Javier Enciso
  * Email:   j4r.e4o@gmail.com
- * Version: 2019.04.18 07:28 COT
+ * Version: 2019.04.18 17:01 COT
 */
 
 //////////////////////////////////////////////////////////////////////
@@ -56,12 +56,10 @@ else{
 
 Logger.log("GERMAN_DST: " + GERMAN_DST);
 
-// var GERMAN_DST = "GMT+2"; // end-march and end-october OK
-// var GERMAN_DST = "GMT+1"; // otherwise
 
 //////////////////////////////////////////////////////////////////////
 
-// Email address allowed to execute "Export Posts" and "Move to Done"
+// Email address allowed to execute "Export Posts" and "Move to Done" menu items
 var allowed_emails = [];
 allowed_emails.push("marialejarojas@gmail.com");
 allowed_emails.push("j4r.e4o@gmail.com");
@@ -80,15 +78,37 @@ var DONE_TAB_NAME = 'Done';
 var LENGHT_TWEET_WITH_IMG = 240;
 
 
+
+/**
+ * Add menu items to Google Spreadsheets
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function onOpen() {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var menu_entries = [];
-    menu_entries.push({name: "Export Posts to Orlo", functionName: "saveAsSSProxy"});
-    menu_entries.push(null);
-    menu_entries.push({name: "Move exported Posts to Done", functionName: "moveToDoneProxy"});
-    ss.addMenu("ESO Tools", menu_entries);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var menu_entries = [];
+  
+  var menu_label_eso = "ESO Tools";
+  var menu_label_export = "Export Posts to Orlo";
+  var menu_label_move = "Move exported Posts to Done tab";
+  
+  if (is_today_cest()){
+    menu_label_export += " (CEST)";
+  }
+  else{
+    menu_label_export += " (CET)";
+  }
+  
+  menu_entries.push({name: menu_label_export, functionName: "saveAsSSProxy"});
+  menu_entries.push(null);
+  menu_entries.push({name: menu_label_move, functionName: "moveToDoneProxy"});
+  ss.addMenu(menu_label_eso, menu_entries);
 };
 
+
+/**
+ * Enable to call moveToDone() method to allowed users
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function moveToDoneProxy(){
   
   var email = Session.getActiveUser().getEmail();   
@@ -100,6 +120,11 @@ function moveToDoneProxy(){
   }
 }
 
+
+/**
+ * Enable to call saveAsSS() method to allowed users
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function saveAsSSProxy(){
   
   var email = Session.getActiveUser().getEmail();   
@@ -111,6 +136,11 @@ function saveAsSSProxy(){
   }
 }
 
+
+/**
+ * Move exported posts to Done tab
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function moveToDone() {
   
   // Current sheet
@@ -165,7 +195,10 @@ function moveToDone() {
   }
 }
 
-
+/**
+ * Create Spreadsheet from selected posts
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function saveAsSS() {
   // Current Spreadsheet
   var ss = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SM_POSTS_TAB_NAME);
@@ -184,7 +217,7 @@ function saveAsSS() {
     if (response.getSelectedButton() == ui.Button.OK) {
       user_time_offset = Number(response.getResponseText());
       
-      // Create a folder from the name of the spreadsheet
+      // Name of the output Spreadsheet without spaces
       var ss_name = ss.getName().toLowerCase().replace(/ /g,'_')
       
       // Create new Spreadsheet for output
@@ -195,7 +228,7 @@ function saveAsSS() {
       // Add Sheet for output
       var ss_output_sheet = ss_output.getActiveSheet();
       
-      // create a file in the Docs List with the given name and the csv data
+      // Create a file in the Docs List with the given name and the csv data
       var csv = convertRangeToXlsFile_(sheet, user_time_offset);
       
       for (var i = 0; i < csv.length; i++) {
@@ -212,6 +245,13 @@ function saveAsSS() {
   
 }
 
+
+/**
+ * Remove special characters in post text
+ * @param {String} text with special characters
+ * @return {String} text without special characters
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function preprocess_text(text) {
   // Remove conflicting caracters from text
   var t = text;
@@ -235,9 +275,15 @@ function preprocess_text(text) {
   
 }
 
+
+/**
+ * Determine if an account id belongs to a twitter account
+ * @param {Number} account id
+ * @return {Boolean} True if the account id belongs to a twitter account
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function is_twitter(account_id) {
-  // Check if an account id belongs to a twitter account
-  // Account id's from Social Sign In
+  // Orlo account id is available in Bulk Upload Sample File
   var accounts = [6836, 7020, 7025, 7022, 7000, 6999, 7007, 7002, 7018, 7023, 7013, 7003, 7004, 7005, 7006, 7002, 7018, 7024, 7018, 7010, 7002, 7027, 7015, 7017, 7008, 7011, 7012, 7021, 7014, 7016, 7019];
   accounts.push(6879); // Hubble TW
   accounts.push(6881); // ESO TW Supernova
@@ -250,9 +296,15 @@ function is_twitter(account_id) {
   return false;
 }
 
+
+/**
+ * Determine if an account id belongs to an instagram account
+ * @param {Number} account id
+ * @return {Boolean} True if the account id belongs to an instagram account
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function is_instagram(account_id) {
-  // Check if an account id belongs to an Instagram account
-  // Social Sign In accounts ID are available in Bulk Upload Sample File
+  // Orlo accounts id is available in Bulk Upload Sample File
   var accounts = [];
   accounts.push(17535); // Hubble Instagram
   accounts.push(17536); // ESO Instagram
@@ -263,10 +315,14 @@ function is_instagram(account_id) {
   return false;
 }
 
-
+/**
+ * Determine if the language of an account is Spanish
+ * @param {Number} column index
+ * @return {Boolean} True if the language of column index is Spanish
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function is_spanish_col(column) {
-  // Check if a column index belongs to a spanish account
-  // column index starts at 0
+  // Column index starts at 0
   var accounts = [];
   accounts.push(35); // ESO FB Chile
   accounts.push(36); // ESO FB Spain
@@ -280,11 +336,14 @@ function is_spanish_col(column) {
 }
 
 
-
-
+/**
+ * Determine if the language of an account is German
+ * @param {Number} column index
+ * @return {Boolean} True if the language of column index is German
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function is_german_col(column) {
-  // Check if a column index belongs to a german account
-  // column index starts at 0
+  // Column index starts at 0
   var accounts = [];
   accounts.push(18); // ESO FB Supernova DE
   accounts.push(19); // ESO FB Austria
@@ -304,7 +363,14 @@ function is_german_col(column) {
 }
 
 
-
+/**
+ * Customize link based on country for eso, supernova and alma sites
+ * @param {String} Link to customize
+ * @param {String} Country name
+ * @param {Number} column index
+ * @return {String} Customized link
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function customize_link_col(link, country, column) {
   // Remove carreige returns and spaces from the end
   l = link.toString().trim();
@@ -348,10 +414,24 @@ function customize_link_col(link, country, column) {
 }
 
 
-function isNumeric(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
+/**
+ * Check if a text is a number
+ * @param {String} text
+ * @return {Boolean} True if the text is number
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
+function isNumeric(text) {
+  return !isNaN(parseFloat(text)) && isFinite(text);
 }
 
+
+/**
+ * Create XLS file from selected rows
+ * @param {String} Spreadsheet id
+ * @param {Number} Time offset of the user who exports the posts.
+ * @return {String} String with the CSV values to export
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
 function convertRangeToXlsFile_(sheet, user_time_offset) {
   
   // Index of the export column
