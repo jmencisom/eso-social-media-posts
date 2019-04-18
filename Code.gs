@@ -1,20 +1,63 @@
 /*
- * Script to export social media posts to Social Sign In format
+ * Script to export social media posts to Orlo format
  * Author:  Javier Enciso
  * Email:   j4r.e4o@gmail.com
- * Version: 2019.04.01 06:57 COT
+ * Version: 2019.04.18 07:28 COT
 */
 
 //////////////////////////////////////////////////////////////////////
 
-// Uncomment/comment the German Daylight Saving Time GERMAN_DST
-// according to the current date. More information:
-// https://www.timeanddate.com/time/zone/germany/berlin
-// Example: if today is 2016.11.04, uncomment GMT+1
-// Last DST update: 2018.03.26
+/**
+ * Check if today is Central European Summer Time - CEST. CEST begins on the last Sunday in March and 
+ * ends on the last Sunday in October each year.
+ * @return {boolean} True is current date is between the last Sunday in March and the last Sunday in October each year.
+ * @see https://en.wikipedia.org/wiki/Summer_Time_in_Europe
+ * @see https://gist.github.com/danalloway/17b48fddab9028432c68
+ * @author Javier Enciso <jenciso@partner.eso.org>
+ */
+function is_today_cest(){
 
-// var GERMAN_DST = "GMT+1"; // usually between end-october and end-march
-var GERMAN_DST = "GMT+2"; // otherwise
+  var currentDate = new Date();
+  var currentYear = currentDate.getFullYear();
+  
+  // CEST Start
+  var firstOfMarch = new Date(currentYear, 2, 1);
+  var daysUntilFirstSundayInMarch = (7 - firstOfMarch.getDay()) % 7;
+  var lastSundayInMarch = firstOfMarch.getDate() + daysUntilFirstSundayInMarch + 21;
+  var cestStartDate = new Date(currentYear, 2, lastSundayInMarch);
+  
+  // CEST End
+  var firstOfOctober = new Date(currentYear, 9, 1);
+  var daysUntilFirstSundayInOctober = (7 - firstOfOctober.getDay()) % 7;
+  var lastSundayInOctober = firstOfOctober.getDate() + daysUntilFirstSundayInOctober + 21;
+  var cestEndDate = new Date(currentYear, 9, lastSundayInOctober);
+  
+  // Logs
+  Logger.log("inputDate: " + currentDate);
+  Logger.log("cestStartDate: " + cestStartDate);
+  Logger.log("cestEndDate: " + cestEndDate);
+  
+  if (currentDate > cestStartDate && currentDate < cestEndDate){
+    return true;
+  }
+  else{
+    return false;
+  }
+}
+
+var GERMAN_DST = "";
+
+if (is_today_cest()){
+  GERMAN_DST = "GMT+2";
+}
+else{
+  GERMAN_DST = "GMT+1";
+}
+
+Logger.log("GERMAN_DST: " + GERMAN_DST);
+
+// var GERMAN_DST = "GMT+2"; // end-march and end-october OK
+// var GERMAN_DST = "GMT+1"; // otherwise
 
 //////////////////////////////////////////////////////////////////////
 
@@ -40,7 +83,7 @@ var LENGHT_TWEET_WITH_IMG = 240;
 function onOpen() {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var menu_entries = [];
-    menu_entries.push({name: "Export Posts to Social Sign In", functionName: "saveAsSSProxy"});
+    menu_entries.push({name: "Export Posts to Orlo", functionName: "saveAsSSProxy"});
     menu_entries.push(null);
     menu_entries.push({name: "Move exported Posts to Done", functionName: "moveToDoneProxy"});
     ss.addMenu("ESO Tools", menu_entries);
