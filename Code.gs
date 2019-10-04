@@ -2,7 +2,7 @@
  * Script to export social media posts to Orlo format
  * Author:  Javier Enciso
  * Email:   j4r.e4o@gmail.com
- * Version: 2019.04.18 17:01 COT
+ * Version: 2019.10.04 04:09 COT
 */
 
 //////////////////////////////////////////////////////////////////////
@@ -260,8 +260,8 @@ function preprocess_text(text) {
   t =  t.toString().trim();
   
   // Replace inner carreige returns by single space
-  t =  t.replace(/\n/g, " ");
-  t =  t.replace(/\r/g, " ");
+  //t =  t.replace(/\n/g, " ");
+  //t =  t.replace(/\r/g, " ");
   
   // Straigh quotation marks
   t =  t.replace("'", "'");
